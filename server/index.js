@@ -51,6 +51,7 @@ async function run() {
   try {
 
     const roomsCollection = client.db('stayvista2025').collection('rooms')
+    const usersCollection = client.db('stayvista2025').collection('users')
 
     // get all rooms from db
 
@@ -114,6 +115,20 @@ async function run() {
 
 
 
+    // save user data in db
+
+    app.put('/user', async(req,res) => {
+      const user = req.body;
+      const options = {upsert : true}
+      const query = {email : user?.email}
+      const updateDoc = {
+        $set : {
+          ...user
+        }
+      }
+      const result = await usersCollection.updateOne(query, updateDoc ,options)
+      res.send(result)
+    })
 
 
 
@@ -149,6 +164,8 @@ async function run() {
         res.status(500).send(err)
       }
     })
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
