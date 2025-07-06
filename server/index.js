@@ -115,21 +115,63 @@ async function run() {
 
 
 
-    // save user data in db
-
+    // save single user data in db
     app.put('/user', async(req,res) => {
       const user = req.body;
-      const options = {upsert : true}
       const query = {email : user?.email}
+      const isExist = await usersCollection.findOne(query) // if user is already exists
+      
+      if(isExist) {
+        if(user.status === 'Requested') {
+          // this part is for changing the status
+          const result = await usersCollection.updateOne(query, {$set : { status : user?.status}})
+          return res.send(result)
+        }
+        else {
+        // this part is for only login again
+        return res.send(isExist)
+      }
+    }
+      
+      // this part is for new user save info
+      const options = {upsert : true}
+      
       const updateDoc = {
         $set : {
-          ...user
+          ...user,
+          timestamp : Date.now()
         }
       }
       const result = await usersCollection.updateOne(query, updateDoc ,options)
       res.send(result)
     })
 
+
+
+
+
+    // get all users data from db in admin page
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result)
+    })
+
+
+
+    // manage user-role
+    app.patch('/user/role',async (req,res) => {
+
+    })
+
+
+
+
+    // get single user info using email
+    app.get('/user/:email', async(req,res) => {
+      const email = req.params.email
+      const result = await usersCollection.findOne({email})
+      res.send(result)
+    })
 
 
 
