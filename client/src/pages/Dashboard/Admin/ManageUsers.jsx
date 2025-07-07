@@ -9,11 +9,7 @@ const ManageUsers = () => {
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
 
-  const {
-    data: users = [],
-    isLoading,
-    refetch,
-  } = useQuery({
+  const {data: users = [],isLoading,refetch} = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       const { data } = await axiosSecure.get(`/users`);

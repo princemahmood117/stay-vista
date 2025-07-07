@@ -13,10 +13,12 @@ import {
 } from '@headlessui/react'
 import { BsCheckLg } from 'react-icons/bs'
 import { AiOutlineDown } from 'react-icons/ai'
+
 const roles = ['guest', 'host', 'admin']
 
 const UpdateUserModal = ({ setIsOpen, isOpen, modalHandler, user }) => {
   const [selected, setSelected] = useState(user.role)
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog

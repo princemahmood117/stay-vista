@@ -1,10 +1,53 @@
 import PropTypes from "prop-types";
 import UpdateUserModal from "../Modal/UpdateUserModal";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
+import toast from "react-hot-toast";
+import useAuth from "../../hooks/useAuth";
+
+
 const UserDataRow = ({ user, refetch }) => {
+
   const [isOpen, setIsOpen] = useState(false);
-  const modalHandler = (selected) => {
-    console.log(selected);
+  const axiosSecure = useAxiosSecure()
+  const {user : loggedInUser} = useAuth()
+
+  const {mutateAsync} = useMutation({
+    mutationFn : async (role) => {
+      const {data} = await axiosSecure.patch(`/users/update/${user?.email}`, role)
+      return data
+    },
+    onSuccess : (data)=>{
+      console.log(data);
+      refetch()
+      toast.success('User role updated')
+      setIsOpen(false)
+
+    }
+  })
+
+
+  const modalHandler = async(selected) => {
+    if(loggedInUser?.email === user?.email) {
+      toast.error("Admin can't change their own role!")
+      return setIsOpen(false)
+    }
+    
+    const userRole = {
+      role : selected,
+      status : 'Verified',
+    }
+
+    try {
+      await mutateAsync(userRole)
+    }
+    catch (error) {
+      console.log(error);
+      toast.error('Error updating user role!')
+    }
+
+
   };
   return (
     <tr>

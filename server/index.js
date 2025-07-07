@@ -139,7 +139,7 @@ async function run() {
       const updateDoc = {
         $set : {
           ...user,
-          timestamp : Date.now()
+          timestamp: Date.now()
         }
       }
       const result = await usersCollection.updateOne(query, updateDoc ,options)
@@ -159,8 +159,18 @@ async function run() {
 
 
     // manage user-role
-    app.patch('/user/role',async (req,res) => {
-
+    app.patch('/users/update/:email',async (req,res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = {email}
+      const updateDoc = {
+        $set : {
+          ...user,
+          timestamp: Date.now()
+        }
+      }
+      const result = await usersCollection.updateOne(query, updateDoc)
+      res.send(result)
     })
 
 
