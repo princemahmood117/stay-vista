@@ -5,6 +5,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
+const stripe = require('stripe')(process.env.VITE_STRIPE_SECRET_KEY)
 
 const port = process.env.PORT || 5000
 
@@ -18,6 +19,8 @@ app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
+
+
 
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
@@ -53,6 +56,37 @@ async function run() {
     const roomsCollection = client.db('stayvista2025').collection('rooms')
     const usersCollection = client.db('stayvista2025').collection('users')
 
+
+
+
+    // verify admin middleware
+    const verifyAdmin = async(req,res,next)=> {
+      const user = req.user;
+      const query = {email : user?.email}
+      const result = await usersCollection.findOne(query)
+
+      if(!result || result.role !== 'admin'){
+        return res.status(401).send({message : "unauthorized access from verifyAdmin"})
+      } 
+      next()
+    }
+
+
+    // verify host middleware
+    const verifyHost = async(req,res,next)=> {
+      const user = req.user;
+      const query = {email : user?.email}
+      const result = await usersCollection.findOne(query)
+
+      if(!result || result.role !== 'host'){
+        return res.status(401).send({message : "unauthorized access from verifyHost"})
+      } 
+      next()
+    }
+
+
+
+
     // get all rooms from db
 
     app.get('/rooms', async (req,res) => {
@@ -82,7 +116,7 @@ async function run() {
 
 
     // save room to db
-    app.post('/add-room', async (req,res) => {
+    app.post('/add-room', verifyToken, verifyHost, async (req,res) => {
       const roomData = req.body;
       const result = await roomsCollection.insertOne(roomData)
       console.log(result);
@@ -91,7 +125,7 @@ async function run() {
 
 
     // delete room
-    app.delete('/room/:id', async(req,res) => {
+    app.delete('/room/:id',verifyToken,verifyHost, async(req,res) => {
       const id = req.params.id;
       const query = {_id : new ObjectId(id)}
       const result = await roomsCollection.deleteOne(query)
@@ -102,7 +136,7 @@ async function run() {
 
 
     // get rooms for host
-     app.get('/my-listings/:email', async (req,res) => {
+     app.get('/my-listings/:email',verifyToken,verifyHost, async (req,res) => {
       const email = req.params.email
       let query = {'host.email':email}
       const result = await roomsCollection.find(query).toArray()
@@ -151,7 +185,8 @@ async function run() {
 
 
     // get all users data from db in admin page
-    app.get('/users', async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+      console.log(req.user);
       const result = await usersCollection.find().toArray();
       res.send(result)
     })
@@ -181,6 +216,34 @@ async function run() {
       const email = req.params.email
       const result = await usersCollection.findOne({email})
       res.send(result)
+    })
+
+
+
+
+
+
+    // payment related
+    app.post('/create-payment-intent', verifyToken, async(req,res) => {
+      const price = req.body.price;
+      const priceInCent = parseFloat(price) * 100
+      if(!price || priceInCent < 1) {
+        return
+      }
+
+      // generate client-secret
+      const {client_secret} = await stripe.paymentIntents.create({
+        amount : priceInCent,
+        currency : 'usd',
+        automatic_payment_methods: {
+        enabled: true,
+       },
+      })
+
+      // send client-secret as response
+      res.send({
+        clientSecret : client_secret
+      })
     })
 
 

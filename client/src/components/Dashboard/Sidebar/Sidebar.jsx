@@ -23,6 +23,7 @@ const Sidebar = () => {
     setActive(!isActive)
   }
 
+  // guest/host toggle button
   const toggleHandler = (event)=> {
     setToggle(event.target.checked)
   }

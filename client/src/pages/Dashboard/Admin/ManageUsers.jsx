@@ -1,5 +1,4 @@
 import { Helmet } from "react-helmet-async";
-import useAuth from "../../../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import LoadingSpinner from "../../../components/Shared/LoadingSpinner";
@@ -7,8 +6,7 @@ import UserDataRow from "../../../components/TableRows/UserDataRow";
 
 const ManageUsers = () => {
   const axiosSecure = useAxiosSecure();
-  const { user } = useAuth();
-
+  
   const {data: users = [],isLoading,refetch} = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
@@ -60,7 +58,7 @@ const ManageUsers = () => {
                   {users.map((user) => (
                     <UserDataRow
                       key={user?._id}
-                      user={user}
+                      user={user} // this 'user' is the all individual users created in this site,sendind this to <UserDataRow/>
                       refetch={refetch}
                     ></UserDataRow>
                   ))}

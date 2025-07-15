@@ -13,6 +13,9 @@ import MyListings from '../pages/Dashboard/Host/MyListings'
 import Profile from '../pages/Profile/Profile'
 import ManageUsers from '../pages/Dashboard/Admin/ManageUsers'
 import MyBookings from '../pages/Dashboard/Guest/MyBookings/MyBookings'
+import AdminRoute from './AdminRoute'
+import HostRoute from './HostRoute'
+import ManageBookings from '../pages/Dashboard/Host/ManageBookings'
 
 export const router = createBrowserRouter([
   {
@@ -30,38 +33,46 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  
   { path: '/login', element: <Login /> },
   { path: '/signup', element: <SignUp /> },
 
   {
     path : '/dashboard',
-    element : <DashboardLayout></DashboardLayout>,
+    element : <PrivateRoute><DashboardLayout></DashboardLayout></PrivateRoute>,
     children : [
       {
         index : true,
-        element : <Statistics></Statistics>
+        element : <PrivateRoute><Statistics></Statistics></PrivateRoute>
       },
 
       {
         path : 'add-room',
-        element : <AddRoom></AddRoom>
+        element : <PrivateRoute><HostRoute><AddRoom></AddRoom></HostRoute></PrivateRoute>
       },
 
       {
         path : 'my-listings',
-        element : <MyListings></MyListings>
+        element : <PrivateRoute><HostRoute><MyListings></MyListings></HostRoute></PrivateRoute>
       },
+
       {
         path : 'profile',
-        element : <Profile></Profile>
+        element : <PrivateRoute><Profile></Profile></PrivateRoute>
       },
+
       {
         path : 'manage-users',
-        element : <ManageUsers></ManageUsers>
+        element : <PrivateRoute><AdminRoute><ManageUsers></ManageUsers></AdminRoute></PrivateRoute>
       },
+      
       {
         path : 'my-bookings',
-        element : <MyBookings></MyBookings>
+        element : <PrivateRoute><MyBookings></MyBookings></PrivateRoute>
+      },
+      {
+        path : 'manage-bookings',
+        element : <PrivateRoute><HostRoute><ManageBookings></ManageBookings></HostRoute></PrivateRoute>
       },
     ]
   }

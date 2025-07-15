@@ -7,11 +7,11 @@ import toast from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 
 
-const UserDataRow = ({ user, refetch }) => {
+const UserDataRow = ({ user, refetch }) => {  // this user is 'all individual users logged-in in this site'
 
   const [isOpen, setIsOpen] = useState(false);
   const axiosSecure = useAxiosSecure()
-  const {user : loggedInUser} = useAuth()
+  const {user : loggedInUser} = useAuth() // this is currently logged-in user
 
   const {mutateAsync} = useMutation({
     mutationFn : async (role) => {

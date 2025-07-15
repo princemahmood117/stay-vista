@@ -1,10 +1,10 @@
 import { Helmet } from 'react-helmet-async'
 
-const MyBookings = () => {
+const ManageBookings = () => {
   return (
     <>
       <Helmet>
-        <title>My Bookings</title>
+        <title>Manage Bookings</title>
       </Helmet>
 
       <div className='container mx-auto px-4 sm:px-8'>
@@ -24,7 +24,7 @@ const MyBookings = () => {
                       scope='col'
                       className='px-5 py-3 bg-white  border-b border-gray-200 text-gray-800  text-left text-sm uppercase font-normal'
                     >
-                      Info
+                      Guest Info
                     </th>
                     <th
                       scope='col'
@@ -52,7 +52,7 @@ const MyBookings = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody>{/* Table Row Data */}</tbody>
+                <tbody>{/* Table row data */}</tbody>
               </table>
             </div>
           </div>
@@ -62,4 +62,4 @@ const MyBookings = () => {
   )
 }
 
-export default MyBookings
+export default ManageBookings
