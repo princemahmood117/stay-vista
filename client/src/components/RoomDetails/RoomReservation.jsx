@@ -6,9 +6,9 @@ import { differenceInCalendarDays } from "date-fns";
 import BookingModal from "../Modal/BookingModal";
 import useAuth from "../../hooks/useAuth";
 
-const RoomReservation = ({ room }) => {
-  const [isOpen,setIsOpen] = useState(false)
-  const {user} = useAuth()
+const RoomReservation = ({ room, refetch }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
   const [state, setState] = useState([
     {
       startDate: room.from,
@@ -18,17 +18,14 @@ const RoomReservation = ({ room }) => {
   ]);
 
   const totalPrice = parseInt(
-    differenceInCalendarDays(
-      new Date(room.to), new Date(room.from)
-    ) * room?.price
-  )
+    differenceInCalendarDays(new Date(room.to), new Date(room.from)) *
+      room?.price
+  );
   console.log(totalPrice);
 
-
-
-  const closeModal = ()=> {
-    setIsOpen(false)
-  }
+  const closeModal = () => {
+    setIsOpen(false);
+  };
   return (
     <div className="rounded-xl border-[1px] border-neutral-200 overflow-hidden bg-white">
       <div className="flex items-center gap-1 p-4">
@@ -56,12 +53,27 @@ const RoomReservation = ({ room }) => {
       </div>
       <hr />
 
-
       <div className="p-4">
-        <Button onClick={()=> setIsOpen(true)} label={"Reserve"} />
+        <Button
+          disabled={room?.booked === true}
+          onClick={() => setIsOpen(true)}
+          label={"Reserve"}
+        />
       </div>
-      <BookingModal isOpen={isOpen} closeModal={closeModal} bookingInfo={{...room, price:totalPrice, guest:{name:user?.displayName}}}></BookingModal>
-
+      <BookingModal
+        isOpen={isOpen}
+        refetch={refetch}
+        closeModal={closeModal}
+        bookingInfo={{
+          ...room,
+          price: totalPrice,
+          guest: {
+            name: user?.displayName,
+            email: user?.email,
+            image: user?.photoURL,
+          },
+        }}
+      ></BookingModal>
 
       <hr />
       <div className="p-4 flex items-center justify-between font-semibold text-lg">
@@ -74,6 +86,7 @@ const RoomReservation = ({ room }) => {
 
 RoomReservation.propTypes = {
   room: PropTypes.object,
+  refetch: PropTypes.func,
 };
 
 export default RoomReservation;

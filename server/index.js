@@ -55,6 +55,7 @@ async function run() {
 
     const roomsCollection = client.db('stayvista2025').collection('rooms')
     const usersCollection = client.db('stayvista2025').collection('users')
+    const bookingsCollection = client.db('stayvista2025').collection('bookings')
 
 
 
@@ -249,6 +250,65 @@ async function run() {
 
 
 
+    // save booking information into db
+    app.post('/booking', verifyToken, async(req, res) => {
+      const bookingData = req.body;
+      const result = await bookingsCollection.insertOne(bookingData);
+      res.send(result)
+    })
+
+
+
+
+    // update room status (external route)
+    app.patch(`/room/status/:id`, async(req,res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      const query = {_id: new ObjectId(id)}
+      const updateDoc = {
+      $set : {
+        booked : status,
+      }
+    }
+      const result = await roomsCollection.updateOne(query,updateDoc)
+      res.send(result)
+    })
+
+
+
+
+    // get all bookings for a guest
+    app.get(`/my-bookings/:email`, verifyToken, async(req,res) => {
+      const email = req.params.email;
+      const query = {'guest.email': email}
+      const result = await bookingsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+
+
+    // get all booking data for host
+    app.get(`/manage-bookings/:email`,verifyToken,verifyHost, async(req,res) => {
+      const email = req.params.email;
+      const query = {'host.email' : email}
+      const result = await bookingsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+
+
+    // delete a single booked data by guest
+    app.delete(`/booking/:id`, verifyToken, async(req,res) => {
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await bookingsCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+
 
     // auth related api
     app.post('/jwt', async (req, res) => {
@@ -301,65 +361,3 @@ app.listen(port, () => {
   console.log(`StayVista is running on port ${port}`)
 })
 
-
-// require('dotenv').config();
-
-// const express = require('express')
-// const app = express()
-
-// app.use(express.json())
-
-// const corsOptions = {
-//   origin: ['http://localhost:5173', 'http://localhost:5174'],
-//   credentials: true,
-//   optionSuccessStatus: 200,
-// }
-
-// // middleware
-// const cors = require('cors')
-// app.use(cors(corsOptions))
-
-
-// const port = process.env.PORT || 5000
-
-// const { MongoClient, ServerApiVersion } = require('mongodb');
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ddujh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-
-// // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-// const client = new MongoClient(uri, {
-//   serverApi: {
-//     version: ServerApiVersion.v1,
-//     strict: true,
-//     deprecationErrors: true,
-//   }
-// });
-
-// async function run() {
-//   try {
-//     await client.connect();
-
-
-
-
-//     // Send a ping to confirm a successful connection
-//     await client.db("admin").command({ ping: 1 });
-//     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-//   } 
-  
-  
-  
-//   finally {
-   
-//     // await client.close();
-//   }
-// }
-// run().catch(console.dir);
-
-// app.get('/', (req,res) => {
-//   res.send('this is stayvista2025 again')
-// })
-
-// app.listen(port, () => {
-//   console.log(`server is running on port ${port}`);
-// })

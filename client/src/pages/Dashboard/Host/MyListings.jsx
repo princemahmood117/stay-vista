@@ -33,7 +33,6 @@ const MyListings = () => {
 
 //   handle Delete function
 const handleDelete = async(id) => {
-    console.log(id);
     try {
       await mutateAsync(id)
     }

@@ -12,7 +12,7 @@ const RoomDetails = () => {
 
 const axiosCommon = useAxiosCommon()
 
-  const {data : room = {}, isLoading} = useQuery({
+  const {data : room = {}, isLoading, refetch} = useQuery({
     queryKey : ['room', id],
     queryFn : async () => {
       const {data} = await axiosCommon.get(`/room/${id}`)
@@ -33,11 +33,11 @@ const axiosCommon = useAxiosCommon()
           {/* Header */}
           <div className='flex flex-col gap-6'>
             <div>
-              <Heading title={room.title} subtitle={room.location} />
+              <Heading title={room?.title} subtitle={room?.location} />
               <div className='w-full md:h-[60vh] overflow-hidden rounded-xl'>
                 <img
                   className='object-cover w-full h-full'
-                  src={room.image}
+                  src={room?.image}
                   alt='header image'
                 />
               </div>
@@ -95,7 +95,7 @@ const axiosCommon = useAxiosCommon()
 
             <div className='md:col-span-3 order-first md:order-last mb-10'>
               {/* RoomReservation */}
-              <RoomReservation room={room} />
+              <RoomReservation room={room} refetch={refetch}/>
             </div>
           </div>
         </div>

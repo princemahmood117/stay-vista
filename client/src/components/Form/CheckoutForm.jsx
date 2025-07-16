@@ -4,8 +4,10 @@ import "./CheckoutForm.css";
 import { useEffect, useState } from "react";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
 import useAuth from "../../hooks/useAuth";
+import {ImSpinner9} from "react-icons/im"
+import toast from "react-hot-toast";
 
-const CheckoutForm = ({ closeModal, bookingInfo }) => {
+const CheckoutForm = ({ closeModal, bookingInfo, refetch }) => {
   const {user} = useAuth()
   const stripe = useStripe();
   const elements = useElements();
@@ -83,12 +85,32 @@ const CheckoutForm = ({ closeModal, bookingInfo }) => {
 
     if(paymentIntent.status === 'succeeded') {
       // steps 1. create payment info object
+      const paymentInfo = {
+        ...bookingInfo,
+        roomId : bookingInfo._id, 
+        transactionId : paymentIntent.id,
+        date : new Date(),
+      }
+      delete paymentInfo._id;
+      console.log(paymentInfo);
 
       // steps 2. save payment info in bookingCollection in Database
+      try {
+        const {data} = await axiosSecure.post('/booking',paymentInfo)
+        console.log(data);
 
       // steps 3. change room status to 'booked'
-    }
+      await axiosSecure.patch(`/room/status/${bookingInfo._id}`,{status : true})
 
+      toast.success('payment successfull')
+      setProcessing(false)
+      closeModal(true)
+      refetch()
+      } 
+      catch (err) {
+        console.log(err);
+      }     
+    }
   };
 
   return (
@@ -117,9 +139,11 @@ const CheckoutForm = ({ closeModal, bookingInfo }) => {
             type="submit"
             className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-2 text-sm font-medium text-green-900 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
           >
-            Pay ${bookingInfo?.price}
+            {processing ? <ImSpinner9 size={25} className="animate-spin m-auto"></ImSpinner9> : `Pay ${bookingInfo?.price}`}
+            
           </button>
           <button
+            disabled={processing}
             type="button"
             className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
             onClick={closeModal}
@@ -139,4 +163,5 @@ export default CheckoutForm;
 CheckoutForm.propTypes = {
   bookingInfo: PropTypes.object,
   closeModal: PropTypes.func,
+  refetch : PropTypes.func,
 };
