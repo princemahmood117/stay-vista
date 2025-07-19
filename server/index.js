@@ -310,6 +310,68 @@ async function run() {
 
 
 
+    
+    // admin statistics
+    app.get(`/admin-stat`,async(req,res) => {
+      const bookingDetails = await bookingsCollection.find({}, {projection:{   // first {} means 'filter' (no filter used here)
+        date:1,
+        price:1,
+      }}).toArray()
+
+      const totalPrice = bookingDetails.reduce((sum,booking)=> sum+booking?.price ,0)
+    
+      const totalUsers = await usersCollection.countDocuments()
+      const totalRooms = await roomsCollection.countDocuments()
+
+      // reference chart data
+      // const data = [  
+      //    ['Day', 'Sales'],
+      //    ['9',  1000],
+      //    ['10', 1170],
+      //    ['11', 660],
+      //    ['12', 1030],
+      // ]
+
+//   const dailySalesMap = new Map()
+
+//   bookingDetails.forEach(booking => {
+//   const dateObj = new Date(booking?.date)
+//   const day = dateObj.getDate()
+//   const month = dateObj.getMonth() + 1
+//   const label = `${day}/${month}`
+
+//   const currentTotal = dailySalesMap.get(label) || 0
+//   dailySalesMap.set(label, currentTotal + (booking?.price || 0))
+// })
+
+// const chartData = [['Day', 'Sales']]
+// for (const [label, total] of dailySalesMap.entries()) {
+//   chartData.push([label, total])
+// }
+
+
+      const chartData = bookingDetails.map((booking) => {
+        const day = new Date(booking?.date).getDate()
+        const month = new Date(booking?.date).getMonth() + 1
+
+        const data = [`${day}/${month}`, booking?.price]
+        return data
+      })
+
+      chartData.unshift(['Day', 'Sales'])
+
+      console.log(chartData);
+
+      res.send({totalUsers,totalRooms, totalBookings:bookingDetails.length, totalPrice, chartData})
+      
+    })
+
+
+
+
+
+
+
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
