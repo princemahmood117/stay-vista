@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import Loader from '../../Loader/Loader';
 
  const options = {
-  title: 'Sales Over Time',
+  title: 'Bookings Over Time',
   curveType: 'function',
   legend: { position: 'bottom' },
   series: [{ color: '#F43F5E' }],
 }
 
 
-const SalesLineChart = ({data}) => {
+const BookingLineChart = ({data}) => {
   const [loading,setLoading] = useState(true)
 
   useEffect(()=> {
@@ -25,8 +25,8 @@ const SalesLineChart = ({data}) => {
 }
 
 
-SalesLineChart.propTypes = {
+BookingLineChart.propTypes = {
   data: PropTypes.array,
 };
 
-export default SalesLineChart
+export default BookingLineChart

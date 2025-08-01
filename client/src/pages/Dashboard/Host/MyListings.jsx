@@ -102,7 +102,7 @@ const handleDelete = async(id) => {
 
                 <tbody>
                   {rooms.map((room) => (
-                    <RoomDataRows key={room._id} room={room} handleDelete={handleDelete}></RoomDataRows>
+                    <RoomDataRows key={room._id} room={room} handleDelete={handleDelete} refetch={refetch}></RoomDataRows>
                   ))}
                 </tbody>
               </table>

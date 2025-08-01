@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
 const stripe = require('stripe')(process.env.VITE_STRIPE_SECRET_KEY)
+const nodemailer = require("nodemailer");
 
 const port = process.env.PORT || 5000
 
@@ -19,6 +20,53 @@ app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
+
+
+// send mail
+const sendMail = (emailAddress, emailData) => {
+  // Create a test account or replace with real credentials.
+const transporter = nodemailer.createTransport({
+  service : 'gmail',
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.TRANSPORTER_EMAIL,
+    pass: process.env.TRANSPORTER_PASS,
+  },
+});
+
+// verify
+transporter.verify((error, success) => {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
+
+const mailBody = {
+    from: `"StayVista" <${process.env.TRANSPORTER_EMAIL}>`,   // sender email address
+    to: emailAddress,   // to whome the mail will be sent
+    subject: emailData.subject,
+    // text: "Hello world?", // plain‑text body
+    html: emailData.message, // HTML body
+  }
+
+    transporter.sendMail(mailBody,(error,info) => {
+    if(error){
+      console.log(error);
+    }
+    else {
+      console.log('email sent : ' + info.response);
+    }
+
+  });
+
+
+
+
+}
 
 
 
@@ -178,6 +226,11 @@ async function run() {
         }
       }
       const result = await usersCollection.updateOne(query, updateDoc ,options)
+      // welcome mail
+      sendMail(user?.email, {
+        subject : "Welcome to StayVista",
+        message : `Browse rooms book as you like.`
+      })
       res.send(result)
     })
 
@@ -254,6 +307,19 @@ async function run() {
     app.post('/booking', verifyToken, async(req, res) => {
       const bookingData = req.body;
       const result = await bookingsCollection.insertOne(bookingData);
+
+      // send email
+      // to guest who booked the room
+      sendMail(bookingData?.guest?.email, {
+        subject : "Booking Successful", 
+        message : `Congratulations for booking your room with StayVista. Your Transaction ID is ${bookingData?.transactionId}`
+      })
+       // to host
+      sendMail(bookingData?.host?.email, {
+        subject : "Room Booked", 
+        message : `Your room ID ${bookingData?._id} has been booked by ${bookingData?.guest?.email}`
+      })
+
       res.send(result)
     })
 
@@ -310,9 +376,24 @@ async function run() {
 
 
 
+    // update room
+    app.put('/room/update/:id',verifyToken, verifyHost, async(req,res) => {
+      const id = req.params.id;
+      const roomData = req.body;
+      const query = {_id: new ObjectId(id)}
+      const updateDoc = { 
+        $set : roomData
+      }
+      const result = await roomsCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
+
+
+
+
     
     // admin statistics
-    app.get(`/admin-stat`,async(req,res) => {
+    app.get(`/admin-stat`, verifyToken, verifyAdmin, async(req,res) => {
       const bookingDetails = await bookingsCollection.find({}, {projection:{   // first {} means 'filter' (no filter used here)
         date:1,
         price:1,
@@ -332,6 +413,8 @@ async function run() {
       //    ['12', 1030],
       // ]
 
+      // uncomment this for finding "each day total sales"
+
 //   const dailySalesMap = new Map()
 
 //   bookingDetails.forEach(booking => {
@@ -350,6 +433,8 @@ async function run() {
 // }
 
 
+
+
       const chartData = bookingDetails.map((booking) => {
         const day = new Date(booking?.date).getDate()
         const month = new Date(booking?.date).getMonth() + 1
@@ -358,7 +443,7 @@ async function run() {
         return data
       })
 
-      chartData.unshift(['Day', 'Sales'])
+      chartData.unshift(['Day', 'Sales'])  // first data to be inserted
 
       console.log(chartData);
 
@@ -366,6 +451,67 @@ async function run() {
       
     })
 
+
+
+
+
+
+    // host statistics
+    app.get('/host-stat',verifyToken, verifyHost,async(req,res) => {
+      const {email} = req.user;
+      const bookingDetails = await bookingsCollection.find({"host.email" : email},{projection : {
+        date : 1,
+        price : 1
+      }}).toArray()
+
+      const totalRooms = await roomsCollection.countDocuments({'host.email' : email})
+      const totalPrice = bookingDetails.reduce((sum, booking) => sum+booking.price,0)
+
+      const {timestamp} = await usersCollection.findOne({email}, {projection : {
+        timestamp : 1
+      }})
+
+      const chartData = bookingDetails.map((booking) => {
+        const day = new Date(booking?.date).getDate()
+        const month = new Date(booking?.date).getMonth()
+        const data = [`${day}/ ${month}`, booking?.price]
+        return data
+      })
+      chartData.unshift(['Day', 'Sales'])
+
+      res.send({totalPrice, totalRooms, chartData, hostSince:timestamp, totalBookings:bookingDetails.length})
+      
+    })
+
+
+
+
+
+    // guest statistics
+    app.get('/guest-stat',verifyToken, async(req,res) => {
+      const {email} = req.user;
+      const bookingDetails = await bookingsCollection.find({"guest.email" : email},{projection : {
+        date : 1,
+        price : 1
+      }}).toArray()
+
+      const totalPrice = bookingDetails.reduce((sum, booking) => sum+booking.price,0)
+
+      const {timestamp} = await usersCollection.findOne({email}, {projection : {
+        timestamp : 1
+      }})
+
+      const chartData = bookingDetails.map((booking) => {
+        const day = new Date(booking?.date).getDate()
+        const month = new Date(booking?.date).getMonth()
+        const data = [`${day}/ ${month}`, booking?.price]
+        return data
+      })
+      chartData.unshift(['Day', 'Bookings'])
+
+      res.send({totalPrice, chartData, guestSince:timestamp, totalBookings:bookingDetails.length})
+      
+    })
 
 
 

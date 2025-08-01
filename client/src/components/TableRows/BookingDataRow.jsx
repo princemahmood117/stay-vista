@@ -66,6 +66,7 @@ const BookingDataRow = ({ booking, refetch}) => {
                 alt="profile"
                 src={booking?.guest?.image}
                 className="mx-auto object-cover rounded h-10 w-15 "
+                referrerPolicy='no-referrer'
               />
             </div>
           </div>

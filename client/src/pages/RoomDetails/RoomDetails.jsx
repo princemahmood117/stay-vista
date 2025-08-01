@@ -65,6 +65,7 @@ const axiosCommon = useAxiosCommon()
                     width='30'
                     alt='Avatar'
                     src={room?.host?.image}
+                    referrerPolicy='no-referrer'
                   />
                 </div>
                 <div

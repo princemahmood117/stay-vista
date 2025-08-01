@@ -16,11 +16,14 @@ const AddRoom = () => {
   const [imagePreview, setImagePreview] = useState();
   const [imageText, setImageText] = useState("");
   const [loading, setLoading] = useState(false);
+
   const [dates, setDates] = useState({
     startDate: new Date(),
     endDate: new Date(),
     key: "selection",
   });
+
+  
   const handleDateRange = (item) => {
     console.log(item.selection);
     setDates(item.selection);
